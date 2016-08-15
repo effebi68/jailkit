@@ -364,10 +364,11 @@ int main (int argc, char **argv) {
 	}
 	
 	/* modify user dir for jail */
-	unsigned int len1 = strlen(pw->pw_name);
-	unsigned int len2 = strlen(pw->pw_dir);
-	unsigned int len = /* /chroot/ */4 + len1 + len2 + /* /. */ 2 + /* \0 */ 1;
-	snprintf(pw->pw_dir, len, "%s%s%s%s", "/chroot/", pw->pw_name, "/.", pw->pw_dir);
+	/* make a copy of the current user dir */
+	char old_dir[strlen(pw->pw_dir)];
+	strncpy(old_dir, pw->pw_dir, strlen(pw->pw_dir));
+
+	sprintf(pw->pw_dir, "/chroot/%s/.%s", pw->pw_name, old_dir);
 	// example: /chroot/test/./home/test
 	
 	if (strstr(pw->pw_dir, "/./") == NULL) {
