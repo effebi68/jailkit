@@ -362,6 +362,14 @@ int main (int argc, char **argv) {
 		syslog(LOG_ERR, "abort, got an empty home directory for user %s (%u)", pw->pw_name, getuid());
 		exit(16);
 	}
+	
+	/* modify user dir for jail */
+	unsigned int len1 = strlen(pw->pw_name);
+	unsigned int len2 = strlen(pw->pw_dir);
+	unsigned int len = /* /chroot/ */4 + len1 + len2 + /* /. */ 2 + /* \0 */ 1;
+	snprintf(pw->pw_dir, len, "%s%s%s%s", "/chroot/", pw->pw_name, "/.", pw->pw_dir);
+	// example: /chroot/test/./home/test
+	
 	if (strstr(pw->pw_dir, "/./") == NULL) {
 		syslog(LOG_ERR, "abort, homedir '%s' for user %s (%u) does not contain the jail separator <jail>/./<home>", pw->pw_dir, pw->pw_name, getuid());
 		exit(17);
