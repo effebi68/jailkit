@@ -134,13 +134,18 @@ int testsafepath(const char *path, int owner, int group) {
 		retval |= TESTPATH_OTHERW;
 	}
 	if (sbuf.st_uid != owner){
-		syslog(owner==0 ? LOG_ERR : LOG_NOTICE, "path %s is not owned by user %d", path, owner);
-		retval |= TESTPATH_OWNER;
+		if (sbuf.st_uid != 0){
+			syslog(LOG_NOTICE, "path %s is not owned by user %d", path, owner);
+			retval |= TESTPATH_OWNER;
+		}
 	}
 	if (sbuf.st_gid != group){
-		syslog(group==0 ? LOG_ERR : LOG_NOTICE, "path %s is not owned by group %d", path, group);
-		retval |= TESTPATH_GROUP;
+		if (sbuf.st_gid != 0){
+			syslog(LOG_NOTICE, "path %s is not owned by group %d", path, group);
+			retval |= TESTPATH_GROUP;
+		}
 	}
+	
 	return retval;
 }
 
