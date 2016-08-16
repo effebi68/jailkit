@@ -280,18 +280,17 @@ struct passwd *jk_fake_dir(struct passwd *pw) {
 	/* modify user dir for jail */
 	/* make a copy of the current user dir */
 	char *old_dir = malloc(strlen(pw->pw_dir) + 1);
-	if(old_dir != NULL) {
-		strcpy(old_dir, pw->pw_dir);
-
-		sprintf(pw->pw_dir, "/chroot/%s/.%s", pw->pw_name, old_dir);
-		// example: /chroot/test/./home/test
-		
-		free(old_dir);
-	}
-	else {
+	if(old_dir == NULL) {
 		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
 		exit(17);
 	}
+	
+	strcpy(old_dir, pw->pw_dir);
+
+	sprintf(pw->pw_dir, "/chroot/%s/.%s", pw->pw_name, old_dir);
+	// example: /chroot/test/./home/test
+	
+	free(old_dir);
 	
 	return pw;
 }
@@ -299,15 +298,14 @@ struct passwd *jk_fake_dir(struct passwd *pw) {
 void jk_mount (const char *jaildir, const char *home) {
 	char *path = malloc(strlen(jaildir) + strlen(home) + 1);
 	
-	if(path != NULL) {
-		sprintf(path, "%s%s", jaildir, home);
-		// example: /chroot/test/home/test
-	}
-	else {
+	if(path == NULL) {
 		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
 		exit(17);
 	}
-
+	
+	sprintf(path, "%s%s", jaildir, home);
+	// example: /chroot/test/home/test
+	
 	if (jk_is_mounted(path) == 0) {
 		if (mount(home, path, NULL, MS_MGC_VAL | MS_BIND, NULL)) {
 			syslog(LOG_ERR, "ERROR: unable to mount %s to %s", home, path);
