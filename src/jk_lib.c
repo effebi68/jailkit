@@ -43,6 +43,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include <errno.h>
 #include <mntent.h>
+#include <sys/mount.h>
 
 #include "jk_lib.h"
 #include "utils.h"
@@ -290,9 +291,7 @@ struct passwd *jk_fake_dir(struct passwd *pw) {
 	return pw;
 }
 
-int jk_is_mounted (const char *jaildir, const char *home) {
-	struct mntent *ent;
-	FILE *aFile;
+void jk_mount (const char *jaildir, const char *home) {
 	char *path = malloc(strlen(jaildir) + strlen(home) + 1);
 	
 	if(path != NULL) {
@@ -303,7 +302,22 @@ int jk_is_mounted (const char *jaildir, const char *home) {
 		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
 		exit(17);
 	}
+
+	if (jk_is_mounted(path) == 0) {
+		if (mount(home, path, NULL, MS_MGC_VAL | MS_BIND, NULL)) {
+			syslog(LOG_ERR, "ERROR: unable to mount %s to %s", home, path);
+			free(path);
+			exit(17);
+		}
+	}
 	
+	free(path);
+}
+
+int jk_is_mounted (const char *path) {
+	struct mntent *ent;
+	FILE *aFile;
+
 	aFile = setmntent("/proc/mounts", "r");
 	if (aFile == NULL) {
 		syslog(LOG_ERR, "abort, setmntent failed %s:%d", __FILE__, __LINE__);
@@ -313,12 +327,10 @@ int jk_is_mounted (const char *jaildir, const char *home) {
 	while (NULL != (ent = getmntent(aFile))) {
 		if (strcmp(path, ent->mnt_dir) == 0) {
 			endmntent(aFile);
-			free(path);
 			return 1;
 		}
 	}
 	endmntent(aFile);
-	free(path);
 	
 	return 0;
 }

@@ -49,7 +49,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <grp.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/mount.h>
 #include <errno.h>
 #include <syslog.h>
 #include <limits.h>
@@ -422,13 +421,8 @@ int main (int argc, char **argv) {
 	syslog(LOG_INFO, "now entering jail %s for user %s (%u) with arguments %s", jaildir, pw->pw_name, getuid(), tmp);
 	free(tmp);
 
-	// mount home dire into jail
-	if (jk_is_mounted(jaildir, newhome) == 0) {
-		if (mount(newhome, pw->pw_dir, NULL, MS_BIND, NULL)) {
-			syslog(LOG_ERR, "ERROR: unable to mount %s to %s", newhome, pw->pw_dir);
-			exit(17);
-		}
-	}
+	// mount home dir into jail
+	jk_mount(jaildir, newhome);
 	
 	DEBUG_MSG("chroot()\n");
 	/* do the chroot() call */

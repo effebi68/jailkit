@@ -76,6 +76,7 @@ char **explode_string(const char *string, char delimiter);
 int count_array(char **arr);
 void free_array(char **arr);
 struct passwd *jk_fake_dir(struct passwd *pw);
-int jk_is_mounted (const char *jaildir, const char *home);
+void jk_mount (const char *jaildir, const char *home);
+int jk_is_mounted (const char *path);
 
 #endif /* __JK_LIB_H */
