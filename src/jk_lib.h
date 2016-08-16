@@ -78,5 +78,6 @@ void free_array(char **arr);
 struct passwd *jk_fake_dir(struct passwd *pw);
 void jk_mount (const char *jaildir, const char *home);
 int jk_is_mounted (const char *path);
+int jk_check_jail_owner (const char *jail, const char *user);
 
 #endif /* __JK_LIB_H */

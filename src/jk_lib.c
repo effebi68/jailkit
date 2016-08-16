@@ -337,3 +337,20 @@ int jk_is_mounted (const char *path) {
 	
 	return 0;
 }
+
+int jk_check_jail_owner (const char *jail, const char *user) {
+	char *tjail = malloc(strlen("/chroot/") + strlen(user) + 2);
+	if(tjail == NULL) {
+		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
+		exit(17);
+	}
+	
+	sprintf(tjail, "/chroot/%s/", user);
+	if (strcmp(ending_slash(jail), tjail) != 0) {
+		free(tjail);
+		return 0;
+	}
+	free(tjail);
+	
+	return 1;
+}

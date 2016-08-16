@@ -130,21 +130,10 @@ static char *test_jail_and_exec(char *jail, char *user, char *exec) {
 		syslog(LOG_ERR,"abort, an executable must be specified on the commandline");
 		exit(23);
 	}
-	
-	char *tjail = malloc(strlen("/chroot/") + strlen(user) + 2);
-	if(tjail == NULL) {
-		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
-		exit(17);
-	}
-	sprintf(tjail, "/chroot/%s/", user);
-	
-	if (strcmp(jail, tjail) != 0) {
+	if (jk_check_jail_owner(jail, user) == 0) {
 		syslog(LOG_ERR, "abort, jail '%s' is not owned by user '%s'", jail, user);
-		free(tjail);
 		exit(17);
 	}
-	free(tjail);
-	
 	if (jail[0] != '/') {
 		syslog(LOG_ERR,"abort, jail '%s' not accepted, the jail must be an absolute path", jail);
 		exit(27);
@@ -200,7 +189,7 @@ static char *test_jail_and_exec(char *jail, char *user, char *exec) {
 }
 
 static void print_usage() {
-	printf(PACKAGE" "VERSION"\nUsage: "PROGRAMNAME" -j jaildir [-u user] [-g group] [-p pidfile] -x executable -- [executable options]\n");
+	printf(PACKAGE" "VERSION"\nUsage: "PROGRAMNAME" -j jaildir -u user [-g group] [-p pidfile] -x executable -- [executable options]\n");
 	printf("\t-p|--pidfile pidfile\n");
 	printf("\t-j|--jail jaildir\n");
 	printf("\t-x|--exec executable\n");
