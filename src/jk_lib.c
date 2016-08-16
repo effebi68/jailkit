@@ -98,7 +98,6 @@ char *ending_slash(const char *src) {
 	}
 }
 
-
 /*
  * the path should be owned owner:group
  * if it is a file it should not have any setuid or setgid bits set
@@ -303,9 +302,15 @@ void jk_mount (const char *jaildir, const char *home) {
 		exit(17);
 	}
 	
-	sprintf(path, "%s%s", jaildir, home);
+	if (jaildir[strlen(jaildir)-1] == '/') {
+		sprintf(path, "%s%s", strndup(jaildir, strlen(jaildir)-1), home);
+	}
+	else {
+		sprintf(path, "%s%s", jaildir, home);
+	}
 	// example: /chroot/test/home/test
 	
+	syslog(LOG_ERR, "abort, fount path '%s'", path);
 	if (jk_is_mounted(path) == 0) {
 		if (mount(home, path, NULL, MS_MGC_VAL | MS_BIND, NULL)) {
 			syslog(LOG_ERR, "ERROR: unable to mount %s to %s", home, path);
