@@ -423,7 +423,7 @@ int main (int argc, char **argv) {
 	free(tmp);
 
 	// mount home dire into jail
-	if (jk_is_mounted(pw->pw_dir) == 0) { // TODO: fix path comparsion, pw_dir contains /. (mabe we should remoe it in jk_is_mounted)
+	if (jk_is_mounted(jaildir, newhome) == 0) {
 		if (mount(newhome, pw->pw_dir, NULL, MS_BIND, NULL)) {
 			syslog(LOG_ERR, "ERROR: unable to mount %s to %s", newhome, pw->pw_dir);
 			exit(17);

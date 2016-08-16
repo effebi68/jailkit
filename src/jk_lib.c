@@ -290,10 +290,20 @@ struct passwd *jk_fake_dir(struct passwd *pw) {
 	return pw;
 }
 
-int jk_is_mounted (const char *path) {
+int jk_is_mounted (const char *jaildir, const char *home) {
 	struct mntent *ent;
 	FILE *aFile;
-
+	char *path = malloc(strlen(jaildir) + strlen(home) + 1);
+	
+	if(path != NULL) {
+		sprintf(path, "%s%s", jaildir, home);
+		// example: /chroot/test/home/test
+	}
+	else {
+		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
+		exit(17);
+	}
+	
 	aFile = setmntent("/proc/mounts", "r");
 	if (aFile == NULL) {
 		syslog(LOG_ERR, "abort, setmntent failed %s:%d", __FILE__, __LINE__);
@@ -301,12 +311,14 @@ int jk_is_mounted (const char *path) {
 	}
 	
 	while (NULL != (ent = getmntent(aFile))) {
-		if (strcmp(path, ent->mnt_dir) == 0) { // TODO: fix path comparsion
+		if (strcmp(path, ent->mnt_dir) == 0) {
 			endmntent(aFile);
+			free(path);
 			return 1;
 		}
 	}
 	endmntent(aFile);
-
+	free(path);
+	
 	return 0;
 }
