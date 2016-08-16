@@ -114,12 +114,17 @@ static int parse_gid(char *tmpstr) {
 /* tests the jail and executable, if they exists etc.
 returns a newly allocated executable relative to the chroot,
 so it can be used during exec() */
-static char *test_jail_and_exec(char *jail, char *exec) {
+static char *test_jail_and_exec(char *jail, char *user, char *exec) {
 	struct stat sbuf;
+	struct passwd *pw=NULL;
 	char *tmpstr, *retval;
 	if (!jail) {
 		syslog(LOG_ERR,"abort, a jaildir must be specified on the commandline");
 		exit(21);
+	}
+	if(!user) {
+		syslog(LOG_ERR,"abort, a user must be specified on the commandline");
+		exit(39);
 	}
 	if (!exec) {
 		syslog(LOG_ERR,"abort, an executable must be specified on the commandline");
@@ -166,6 +171,16 @@ static char *test_jail_and_exec(char *jail, char *exec) {
 	}
 	retval = strdup(&tmpstr[strlen(jail)]);
 	free(tmpstr);
+	
+	pw = getpwnam(user);
+	if (!pw) {
+		syslog(LOG_ERR, "abort, failed to get user information for user ID %u: %s, check /etc/passwd", getuid(), strerror(errno));
+		exit(13);
+	}
+	
+	// mount home dir into jail
+	jk_mount(jail, pw->pw_dir);
+	
 	return retval;
 }
 
@@ -228,7 +243,7 @@ int main (int argc, char **argv) {
 		}
 		uid = parse_uid(tuser);
 		gid = parse_gid(tgroup);
-		exec = test_jail_and_exec(jail,texec);
+		exec = test_jail_and_exec(jail, tuser, texec);
 		/* construct the new argv from all leftover options */
 		newargv = malloc0((2 + argc - optind)*sizeof(char *));
 		newargv[0] = exec;
