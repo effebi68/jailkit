@@ -310,7 +310,6 @@ void jk_mount (const char *jaildir, const char *home) {
 	}
 	// example: /chroot/test/home/test
 	
-	syslog(LOG_ERR, "abort, fount path '%s'", path);
 	if (jk_is_mounted(path) == 0) {
 		if (mount(home, path, NULL, MS_MGC_VAL | MS_BIND, NULL)) {
 			syslog(LOG_ERR, "ERROR: unable to mount %s to %s", home, path);
