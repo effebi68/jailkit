@@ -302,12 +302,7 @@ void jk_mount (const char *jaildir, const char *home) {
 		exit(17);
 	}
 	
-	if (jaildir[strlen(jaildir)-1] == '/') {
-		sprintf(path, "%s%s", strndup(jaildir, strlen(jaildir)-1), home);
-	}
-	else {
-		sprintf(path, "%s%s", jaildir, home);
-	}
+	sprintf(path, "%s%s", (jaildir[strlen(jaildir)-1] == '/' ? strndup(jaildir, strlen(jaildir)-1) : jaildir), home);
 	// example: /chroot/test/home/test
 	
 	if (jk_is_mounted(path) == 0) {
