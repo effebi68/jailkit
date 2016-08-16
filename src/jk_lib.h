@@ -75,5 +75,6 @@ int count_char(const char *string, char lookfor);
 char **explode_string(const char *string, char delimiter);
 int count_array(char **arr);
 void free_array(char **arr);
+struct passwd *jk_fake_dir(struct passwd *pw);
 
 #endif /* __JK_LIB_H */

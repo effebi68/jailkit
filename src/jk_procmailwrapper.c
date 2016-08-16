@@ -77,20 +77,7 @@ int main (int argc, char **argv, char **envp) {
 	pw = getpwuid(getuid());
 	
 	/* modify user dir for jail */
-	/* make a copy of the current user dir */
-	char *old_dir = malloc(strlen(pw->pw_dir) + 1);
-	if(old_dir != NULL) {
-		strcpy(old_dir, pw->pw_dir);
-
-		sprintf(pw->pw_dir, "/chroot/%s/.%s", pw->pw_name, old_dir);
-		// example: /chroot/test/./home/test
-		
-		free(old_dir);
-	}
-	else {
-		syslog(LOG_ERR, "abort, malloc failed jk_procmailwrapper.c:81");
-		exit(17);
-	}
+	pw = jk_fake_dir(pw);
 	
 	if (!user_is_chrooted(pw->pw_dir)) {
 		/* if the user does not have a chroot homedir, we start the normal procmail now,
