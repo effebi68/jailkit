@@ -42,6 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <mntent.h>
 
 #include "jk_lib.h"
 #include "utils.h"
@@ -282,10 +283,30 @@ struct passwd *jk_fake_dir(struct passwd *pw) {
 		free(old_dir);
 	}
 	else {
-		syslog(LOG_ERR, "abort, malloc failed jk_chrootsh.c:368");
 		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
 		exit(17);
 	}
 	
 	return pw;
+}
+
+int jk_is_mounted (const char *path) {
+	struct mntent *ent;
+	FILE *aFile;
+
+	aFile = setmntent("/proc/mounts", "r");
+	if (aFile == NULL) {
+		syslog(LOG_ERR, "abort, setmntent failed %s:%d", __FILE__, __LINE__);
+		exit(17);
+	}
+	
+	while (NULL != (ent = getmntent(aFile))) {
+		if (strcmp(path, ent->mnt_dir) == 0) { // TODO: fix path comparsion
+			endmntent(aFile);
+			return 1;
+		}
+	}
+	endmntent(aFile);
+
+	return 0;
 }
