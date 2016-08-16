@@ -365,11 +365,19 @@ int main (int argc, char **argv) {
 	
 	/* modify user dir for jail */
 	/* make a copy of the current user dir */
-	char old_dir[strlen(pw->pw_dir)];
-	strncpy(old_dir, pw->pw_dir, strlen(pw->pw_dir));
+	char *old_dir = malloc(strlen(pw->pw_dir) + 1);
+	if(old_dir != NULL) {
+		strcpy(old_dir, pw->pw_dir);
 
-	sprintf(pw->pw_dir, "/chroot/%s/.%s", pw->pw_name, old_dir);
-	// example: /chroot/test/./home/test
+		sprintf(pw->pw_dir, "/chroot/%s/.%s", pw->pw_name, old_dir);
+		// example: /chroot/test/./home/test
+		
+		free(old_dir);
+	}
+	else {
+		syslog(LOG_ERR, "abort, malloc failed jk_chrootsh.c:368");
+		exit(17);
+	}
 	
 	if (strstr(pw->pw_dir, "/./") == NULL) {
 		syslog(LOG_ERR, "abort, homedir '%s' for user %s (%u) does not contain the jail separator <jail>/./<home>", pw->pw_dir, pw->pw_name, getuid());

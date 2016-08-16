@@ -34,6 +34,7 @@ import os.path
 import grp
 import pwd
 import sys
+import stat
 import getopt
 import string
 import shutil
@@ -207,26 +208,21 @@ def jailuser(jail, user, movehome, config):
 	if (oldhome != newhome or pw[6] != PREFIX+'/sbin/jk_chrootsh'):
 		if (config['verbose'] == 1):
 			print 'modify user '+user+'; dir '+newhome+' and shell '+PREFIX+'/sbin/jk_chrootsh'
-		if (not moduser(user,newhome,PREFIX+'/sbin/jk_chrootsh')):
+		if (not moduser(user,oldhome,PREFIX+'/sbin/jk_chrootsh')):
 			sys.stderr.write('failed to modify user '+user+'\n')
 	else:
 		if (config['verbose'] == 1):
 			print 'user '+user+' has a correct home directory and shell already'
 	#move directory contents
-	if (movehome == 1):
-		if (oldhome == newhome):
-			print 'home directory '+oldhome+' is already inside the jail'
-		else:
-			if (not os.path.exists(oldhome)):
-				sys.stderr.write('home directory '+oldhome+' does not exist, nothing moved\n')
-			else:
-				# test if the base directory for newhome exists
-				tmp = os.path.dirname(oldhome)
-				#tmp = jk_lib.nextpathup(oldhome)
-				jk_lib.create_parent_path(jail,tmp, config['verbose'], copy_permissions=1, allow_suid=0, copy_ownership=0)
-				if (config['verbose'] == 1):
-					print 'Moving files from '+oldhome+' to '+newhome
-				jk_lib.move_dir_with_permissions_and_owner(oldhome,newhome,(config['verbose']==1))
+	tmp = os.path.dirname(oldhome)
+	jk_lib.create_parent_path(jail,tmp, config['verbose'], copy_permissions=1, allow_suid=0, copy_ownership=0)
+	os.mkdir(newhome);
+	sbuf = os.stat(oldhome)
+	os.chown(newhome, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
+	mode = stat.S_IMODE(sbuf[stat.ST_MODE])
+	if (mode & (stat.S_ISUID | stat.S_ISGID)):
+		mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
+	os.chmod(newhome, mode)
 
 def user_exists(user):
 	try:
@@ -243,7 +239,7 @@ def usage():
 	print ' -j | --jail= jaildir   : jail directory'
 	print ' -v | --verbose        : verbose output'
 	print ' -n | --noninteractive : no user interaction'
-	print ' -s | --shell= shell    : set shell inside jail ('+PREFIX+'/sbin/jk_lsh default)'
+	print ' -s | --shell= shell    : set shell inside jail (/bin/bash default)'
 	print ' -m | --move           : move home if home outside jail'
 	print ' -h | --help           : this message'
 	print
@@ -308,7 +304,7 @@ def main():
 	config['verbose'] = 0
 	config['interactive'] = 1
 	config['movehome'] = -1 # -1 = interactive
-	config['shell'] = PREFIX+'/sbin/jk_lsh' # default shell
+	config['shell'] = '/bin/bash' # default shell
 	jail = None
 	for o, a in opts:
 		if o in ("-h", "-?", "--help"):
