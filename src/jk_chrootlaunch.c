@@ -152,6 +152,16 @@ static char *test_jail_and_exec(char *jail, char *user, char *exec) {
 		tmpstr = malloc0((strlen(exec)+strlen(jail)+1)*sizeof(char));
 		tmpstr = strcat(strcat(tmpstr, jail), exec);
 	}
+	
+	pw = getpwnam(user);
+	if (!pw) {
+		syslog(LOG_ERR, "abort, failed to get user information for user ID %u: %s, check /etc/passwd", getuid(), strerror(errno));
+		exit(13);
+	}
+	
+	// mount home dir into jail
+	jk_mount(jail, pw->pw_dir);
+	
 	if (lstat(tmpstr, &sbuf) == 0) {
 		if (S_ISLNK(sbuf.st_mode)) {
 			syslog(LOG_ERR, "abort, executable %s is a symlink", tmpstr);
@@ -175,15 +185,6 @@ static char *test_jail_and_exec(char *jail, char *user, char *exec) {
 	}
 	retval = strdup(&tmpstr[strlen(jail)]);
 	free(tmpstr);
-	
-	pw = getpwnam(user);
-	if (!pw) {
-		syslog(LOG_ERR, "abort, failed to get user information for user ID %u: %s, check /etc/passwd", getuid(), strerror(errno));
-		exit(13);
-	}
-	
-	// mount home dir into jail
-	jk_mount(jail, pw->pw_dir);
 	
 	return retval;
 }
