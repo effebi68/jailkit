@@ -76,8 +76,10 @@ int main (int argc, char **argv, char **envp) {
 	DEBUG_MSG(PROGRAMNAME", started\n");
 	pw = getpwuid(getuid());
 	
-	/* modify user dir for jail */
-	pw = jk_fake_dir(pw);
+	if (jk_is_chrooted(pw->pw_name) == 1) {
+		/* modify user dir for jail */
+		pw = jk_fake_dir(pw);
+	}
 	
 	if (!user_is_chrooted(pw->pw_dir)) {
 		/* if the user does not have a chroot homedir, we start the normal procmail now,
@@ -164,7 +166,12 @@ int main (int argc, char **argv, char **envp) {
 			exit(21);
 		}
 		free(test);
-	}		
+	}
+	
+	if (jk_is_chrooted(pw->pw_name) == 1) {
+		// mount home dir into jail
+		jk_mount(jaildir, pw->pw_dir);
+	}
 	
 	/* here do test the ownership of the jail and the homedir and such
 	the function testsafepath doe exit itself on any failure */

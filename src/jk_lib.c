@@ -361,3 +361,21 @@ char *jk_extract_user (const char *path) {
 	return user;
 }
 
+int jk_is_chrooted (const char *user) {
+	struct stat sb;
+	char *path = malloc(strlen(JAIL_PREFIX) + strlen(user) + 1);
+	
+	if(path == NULL) {
+		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
+		exit(17);
+	}
+	
+	sprintf(path, "%s%s", JAIL_PREFIX, user);
+	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+		free(path);
+		return 1;
+	}
+	free(path);
+	
+	return 0;
+}

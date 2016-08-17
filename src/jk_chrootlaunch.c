@@ -159,8 +159,10 @@ static char *test_jail_and_exec(char *jail, char *user, char *exec) {
 		exit(13);
 	}
 	
-	// mount home dir into jail
-	jk_mount(jail, pw->pw_dir);
+	if (jk_is_chrooted(pw->pw_name) == 1) {
+		// mount home dir into jail
+		jk_mount(jail, pw->pw_dir);
+	}
 	
 	if (lstat(tmpstr, &sbuf) == 0) {
 		if (S_ISLNK(sbuf.st_mode)) {

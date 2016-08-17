@@ -82,5 +82,6 @@ void jk_mount (const char *jaildir, const char *home);
 int jk_is_mounted (const char *path);
 int jk_check_jail_owner (const char *jail, const char *user);
 char *jk_extract_user (const char *path);
+int jk_is_chrooted (const char *user);
 
 #endif /* __JK_LIB_H */

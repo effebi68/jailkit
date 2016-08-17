@@ -363,8 +363,10 @@ int main (int argc, char **argv) {
 		exit(16);
 	}
 	
-	/* modify user dir for jail */
-	pw = jk_fake_dir(pw);
+	if (jk_is_chrooted(pw->pw_name) == 1) {
+		/* modify user dir for jail */
+		pw = jk_fake_dir(pw);
+	}
 	
 	if (strstr(pw->pw_dir, "/./") == NULL) {
 		syslog(LOG_ERR, "abort, homedir '%s' for user %s (%u) does not contain the jail separator <jail>/./<home>", pw->pw_dir, pw->pw_name, getuid());
@@ -420,9 +422,11 @@ int main (int argc, char **argv) {
 	tmp = implode_array(&argv[1], argc-1, " ");
 	syslog(LOG_INFO, "now entering jail %s for user %s (%u) with arguments %s", jaildir, pw->pw_name, getuid(), tmp);
 	free(tmp);
-
-	// mount home dir into jail
-	jk_mount(jaildir, newhome);
+	
+	if (jk_is_chrooted(pw->pw_name) == 1) {
+		// mount home dir into jail
+		jk_mount(jaildir, newhome);
+	}
 	
 	DEBUG_MSG("chroot()\n");
 	/* do the chroot() call */

@@ -345,10 +345,10 @@ int main(int argc, char **argv) {
 	}
 	free(jailuser);
 	
-	// mount home dir into jail
-	jk_mount(jail, pw2->pw_dir);
-	
-	
+	if (jk_is_chrooted(pw2->pw_name) == 1) {
+		// mount home dir into jail
+		jk_mount(jail, pw2->pw_dir);
+	}
 	
 	/* test the jail */
 	if (!basicjailissafe(jail)) {
