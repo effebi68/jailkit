@@ -48,6 +48,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "jk_lib.h"
 #include "utils.h"
 
+#define JAIL_PREFIX "/chroot/"
+
 int file_exists(const char *path) {
 	/* where is this function used? access() is more light than stat() but it
 	does not equal a 'file exist', but 'file exists and can be accessed' */
@@ -286,7 +288,7 @@ struct passwd *jk_fake_dir(struct passwd *pw) {
 	
 	strcpy(old_dir, pw->pw_dir);
 
-	sprintf(pw->pw_dir, "/chroot/%s/.%s", pw->pw_name, old_dir);
+	sprintf(pw->pw_dir, "%s%s/.%s", JAIL_PREFIX, pw->pw_name, old_dir);
 	// example: /chroot/test/./home/test
 	
 	free(old_dir);
@@ -338,13 +340,13 @@ int jk_is_mounted (const char *path) {
 }
 
 int jk_check_jail_owner (const char *jail, const char *user) {
-	char *tjail = malloc(strlen("/chroot/") + strlen(user) + 2);
+	char *tjail = malloc(strlen(JAIL_PREFIX) + strlen(user) + 2);
 	if(tjail == NULL) {
 		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
 		exit(17);
 	}
 	
-	sprintf(tjail, "/chroot/%s/", user);
+	sprintf(tjail, "%s%s/", JAIL_PREFIX, user);
 	if (strcmp(ending_slash(jail), tjail) != 0) {
 		free(tjail);
 		return 0;

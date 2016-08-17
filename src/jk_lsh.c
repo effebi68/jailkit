@@ -237,9 +237,7 @@ int main (int argc, char **argv) {
 	DEBUG_MSG("setting umask\n");
 	umaskval = iniparser_get_octalint_at_position(parser, section, "umask", section_pos);
 	if (umaskval != -1) {
-		mode_t oldumask;
-		oldumask = umask(umaskval);
-		/*syslog(LOG_DEBUG, "changing umask from 0%o to 0%o", oldumask, umaskval);*/
+		umask(umaskval);
 	}
 	if (iniparser_get_string_at_position(parser, section, "environment", section_pos, buffer, 1024) > 0) {
 		char **envs, **tmp;
