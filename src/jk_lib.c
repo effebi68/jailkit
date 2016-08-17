@@ -48,8 +48,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "jk_lib.h"
 #include "utils.h"
 
-#define JAIL_PREFIX "/chroot/"
-
 int file_exists(const char *path) {
 	/* where is this function used? access() is more light than stat() but it
 	does not equal a 'file exist', but 'file exists and can be accessed' */
@@ -355,3 +353,11 @@ int jk_check_jail_owner (const char *jail, const char *user) {
 	
 	return 1;
 }
+
+char *jk_extract_user (const char *path) {
+	char *user  = malloc(strlen(path) - strlen(JAIL_PREFIX) - 1);
+	memcpy(user, &path[strlen(JAIL_PREFIX)], strlen(path) - strlen(JAIL_PREFIX) -1);
+	
+	return user;
+}
+

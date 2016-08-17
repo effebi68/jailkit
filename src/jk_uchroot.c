@@ -319,8 +319,9 @@ int main(int argc, char **argv) {
 			break;
 		}
 	}
-
-
+	
+	
+	
 	/* check if the requested jail is allowed */
 	{
 		unsigned int allowed = 0;
@@ -334,6 +335,19 @@ int main(int argc, char **argv) {
 			exit(21);
 		}
 	}
+	
+	char *jailuser = jk_extract_user(jail);
+	struct passwd *pw2 = getpwnam(jailuser);
+	if (!pw2) {
+		syslog(LOG_ERR, "abort, failed to get user information for user ID %u (%s): %s, check /etc/passwd", getuid(), jailuser, strerror(errno));
+		exit(13);
+	}
+	
+	// mount home dir into jail
+	jk_mount(jail, pw2->pw_dir);
+	
+	
+	
 	/* test the jail */
 	if (!basicjailissafe(jail)) {
 		syslog(LOG_ERR, "abort, jail %s is not safe, check ownership and permissions for the jail inclusing system directories such as /etc, /lib, /usr, /dev, /sbin, and /bin", jail);
