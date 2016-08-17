@@ -340,8 +340,10 @@ int main(int argc, char **argv) {
 	struct passwd *pw2 = getpwnam(jailuser);
 	if (!pw2) {
 		syslog(LOG_ERR, "abort, failed to get user information for user ID %u (%s): %s, check /etc/passwd", getuid(), jailuser, strerror(errno));
+		free(jailuser);
 		exit(13);
 	}
+	free(jailuser);
 	
 	// mount home dir into jail
 	jk_mount(jail, pw2->pw_dir);
