@@ -114,20 +114,19 @@ static int parse_gid(char *tmpstr) {
 /* tests the jail and executable, if they exists etc.
 returns a newly allocated executable relative to the chroot,
 so it can be used during exec() */
-static char *test_jail_and_exec(char *jail, , char *exec) {
+static char *test_jail_and_exec(char *jail, char *exec) {
 	struct stat sbuf;
-	char *user;
 	struct passwd *pw=NULL;
-	char *tmpstr, *retval;
+	char *tmpstr, *retval, *user;
 	if (!jail) {
 		syslog(LOG_ERR,"abort, a jaildir must be specified on the commandline");
 		exit(21);
 	}
 	
 	// try to extract the user from jailpath
-	char *user = jk_extract_user(jail);	
+	user = jk_extract_user(jail);	
 	pw = getpwnam(user);
-	free(user);
+	
 	
 	if (!pw) {
 		syslog(LOG_ERR, "abort, failed to get user information for user ID %u: %s, check /etc/passwd", getuid(), strerror(errno));
@@ -188,6 +187,7 @@ static char *test_jail_and_exec(char *jail, , char *exec) {
 	}
 	retval = strdup(&tmpstr[strlen(jail)]);
 	free(tmpstr);
+	free(user);
 	
 	return retval;
 }
