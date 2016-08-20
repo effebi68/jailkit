@@ -114,17 +114,24 @@ static int parse_gid(char *tmpstr) {
 /* tests the jail and executable, if they exists etc.
 returns a newly allocated executable relative to the chroot,
 so it can be used during exec() */
-static char *test_jail_and_exec(char *jail, char *user, char *exec) {
+static char *test_jail_and_exec(char *jail, , char *exec) {
 	struct stat sbuf;
+	char *user;
 	struct passwd *pw=NULL;
 	char *tmpstr, *retval;
 	if (!jail) {
 		syslog(LOG_ERR,"abort, a jaildir must be specified on the commandline");
 		exit(21);
 	}
-	if(!user) {
-		syslog(LOG_ERR,"abort, a user must be specified on the commandline");
-		exit(39);
+	
+	// try to extract the user from jailpath
+	char *user = jk_extract_user(jail);	
+	pw = getpwnam(user);
+	free(user);
+	
+	if (!pw) {
+		syslog(LOG_ERR, "abort, failed to get user information for user ID %u: %s, check /etc/passwd", getuid(), strerror(errno));
+		exit(13);
 	}
 	if (!exec) {
 		syslog(LOG_ERR,"abort, an executable must be specified on the commandline");
@@ -151,12 +158,6 @@ static char *test_jail_and_exec(char *jail, char *user, char *exec) {
 		/* the executable was specified as relative path to the jail, combine them together */
 		tmpstr = malloc0((strlen(exec)+strlen(jail)+1)*sizeof(char));
 		tmpstr = strcat(strcat(tmpstr, jail), exec);
-	}
-	
-	pw = getpwnam(user);
-	if (!pw) {
-		syslog(LOG_ERR, "abort, failed to get user information for user ID %u: %s, check /etc/passwd", getuid(), strerror(errno));
-		exit(13);
 	}
 	
 	if (jk_is_chrooted(pw->pw_name) == 1) {
@@ -192,7 +193,7 @@ static char *test_jail_and_exec(char *jail, char *user, char *exec) {
 }
 
 static void print_usage() {
-	printf(PACKAGE" "VERSION"\nUsage: "PROGRAMNAME" -j jaildir -u user [-g group] [-p pidfile] -x executable -- [executable options]\n");
+	printf(PACKAGE" "VERSION"\nUsage: "PROGRAMNAME" -j jaildir [-u user] [-g group] [-p pidfile] -x executable -- [executable options]\n");
 	printf("\t-p|--pidfile pidfile\n");
 	printf("\t-j|--jail jaildir\n");
 	printf("\t-x|--exec executable\n");
@@ -250,7 +251,7 @@ int main (int argc, char **argv) {
 		}
 		uid = parse_uid(tuser);
 		gid = parse_gid(tgroup);
-		exec = test_jail_and_exec(jail, tuser, texec);
+		exec = test_jail_and_exec(jail, texec);
 		/* construct the new argv from all leftover options */
 		newargv = malloc0((2 + argc - optind)*sizeof(char *));
 		newargv[0] = exec;
