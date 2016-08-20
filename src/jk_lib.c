@@ -357,7 +357,7 @@ int jk_check_jail_owner (const char *jail, const char *user) {
 char *jk_extract_user (const char *path) {
 	char *user  = malloc(strlen(path) - strlen(JAIL_PREFIX) - 1);
 	if(user == NULL) {
-		syslog(LOG_ERR, "abort, failed to extract the username from jaildir '%s'", jail);
+		syslog(LOG_ERR, "abort, failed to extract the username from jaildir '%s'", path);
 		exit(17);
 	}
 	
