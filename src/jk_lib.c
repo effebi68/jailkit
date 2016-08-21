@@ -335,6 +335,7 @@ void jk_mount (const char *jaildir, const char *home) {
 				free(section);
 			}
 		}
+		free(user);
 		iniparser_close(parser);
 	}
 	
@@ -445,11 +446,16 @@ int jk_check_jail_owner (const char *jail, const char *user) {
 char *jk_extract_user (const char *path) {
 	char *user  = malloc(strlen(path) - strlen(JAIL_PREFIX) - 1);
 	if(user == NULL) {
-		syslog(LOG_ERR, "abort, failed to extract the username from jaildir '%s'", path);
+		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
 		exit(17);
 	}
 	
 	memcpy(user, &path[strlen(JAIL_PREFIX)], strlen(path) - strlen(JAIL_PREFIX) -1);
+	
+	if(user == NULL) {
+		syslog(LOG_ERR, "abort, failed to extract the username from jaildir '%s'", path);
+		exit(17);
+	}
 	
 	return user;
 }
