@@ -277,14 +277,10 @@ void free_array(char **arr) {
 
 struct passwd *jk_fake_dir(struct passwd *pw) {
 	/* modify user dir for jail */
-	/* make a copy of the current user dir */
-	char *old_dir = malloc(strlen(pw->pw_dir) + 1);
-	if(old_dir == NULL) {
-		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
-		exit(17);
-	}
+	char *old_dir ;
 	
-	strcpy(old_dir, pw->pw_dir);
+	/* make a copy of the current user dir */
+	old_dir = strdup(pw->pw_dir);
 
 	sprintf(pw->pw_dir, "%s%s/.%s", JAIL_PREFIX, pw->pw_name, old_dir);
 	// example: /chroot/test/./home/test
