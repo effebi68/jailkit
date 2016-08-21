@@ -45,8 +45,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mntent.h>
 #include <sys/mount.h>
 
+#define CONFIGFILE INIPREFIX"/jk_mount.ini"
+
 #include "jk_lib.h"
 #include "utils.h"
+#include "iniparser.h"
 
 int file_exists(const char *path) {
 	/* where is this function used? access() is more light than stat() but it
@@ -293,6 +296,10 @@ struct passwd *jk_fake_dir(struct passwd *pw) {
 void jk_mount (const char *jaildir, const char *home) {
 	char *path = malloc(strlen(jaildir) + strlen(home) + 1);
 	
+	unsigned int mountproc = 0;
+	unsigned int mountsys = 0;
+	unsigned int mountdevpts = 0;
+	
 	if(path == NULL) {
 		syslog(LOG_ERR, "abort, malloc failed %s:%d", __FILE__, __LINE__);
 		exit(17);
@@ -306,6 +313,85 @@ void jk_mount (const char *jaildir, const char *home) {
 			syslog(LOG_ERR, "ERROR: unable to mount %s to %s", home, path);
 			free(path);
 			exit(17);
+		}
+	}
+	
+	Tiniparser *parser = new_iniparser(CONFIGFILE);
+	if (parser) {
+		char *user = jk_extract_user(jaildir);
+		if (user) {
+			char *section = NULL;
+			if (iniparser_has_section(parser, user)) {
+				section = strdup(user);
+			}
+			
+			if (section) {
+				unsigned int pos = iniparser_get_position(parser) - strlen(section) - 2;
+
+				mountproc = iniparser_get_int_at_position(parser, section, "mountproc", pos);
+				mountsys = iniparser_get_int_at_position(parser, section, "mountsys", pos);
+				mountdevpts = iniparser_get_int_at_position(parser, section, "mountdevpts", pos);
+
+				free(section);
+			}
+		}
+		iniparser_close(parser);
+	}
+	
+	// mount proc, sys, devpts
+	// mount("none", "/chroot/k1111/proc", "proc", MS_MGC_VAL, NULL)
+	// mount("sys", "/chroot/k1111/sys", "sysfs", MS_MGC_VAL, NULL)
+	// mount("devpts", "/chroot/k1111/dev/pts", "devpts", MS_MGC_VAL, NULL)
+	// mount(const char *source, const char *target, const char *filesystemtype, unsigned long mountflags, const void *data);
+	
+	if (mountproc == 1) {
+		path = (char *)realloc(path, strlen(jaildir) + 6);
+		sprintf(path, "%s%s", (jaildir[strlen(jaildir)-1] == '/' ? strndup(jaildir, strlen(jaildir)-1) : jaildir), "/proc");
+		
+		if (!dir_exists(path)) {
+			mkdir(path, 0700);
+		}
+		
+		if (jk_is_mounted(path) == 0) {
+			if (mount("none", path, "proc", MS_MGC_VAL, NULL)) {
+				syslog(LOG_ERR, "ERROR: unable to mount %s to %s", home, path);
+				free(path);
+				exit(17);
+			}
+		}
+	}
+	
+	if (mountsys == 1) {
+		path = (char *)realloc(path, strlen(jaildir) + 5);
+		sprintf(path, "%s%s", (jaildir[strlen(jaildir)-1] == '/' ? strndup(jaildir, strlen(jaildir)-1) : jaildir), "/sys");
+		
+		if (!dir_exists(path)) {
+			mkdir(path, 0700);
+		}
+		
+		if (jk_is_mounted(path) == 0) {
+			if (mount("sys", path, "sysfs", MS_MGC_VAL, NULL)) {
+				syslog(LOG_ERR, "ERROR: unable to mount %s to %s", home, path);
+				free(path);
+				exit(17);
+			}
+		}
+	}
+	
+	if (mountdevpts == 1) {
+		path = (char *)realloc(path, strlen(jaildir) + 9);
+		sprintf(path, "%s%s", (jaildir[strlen(jaildir)-1] == '/' ? strndup(jaildir, strlen(jaildir)-1) : jaildir), "/dev/pts");
+		
+		if (!dir_exists(path)) {
+			mkdir(path, 0700);
+		}
+		
+		if (jk_is_mounted(path) == 0) {
+			if (mount("devpts", path, "devpts", MS_MGC_VAL, NULL)) {
+				syslog(LOG_ERR, "ERROR: unable to mount %s to %s", home, path);
+				free(path);
+				exit(17);
+			}
 		}
 	}
 	
@@ -379,4 +465,17 @@ int jk_is_chrooted (const char *user) {
 	free(path);
 	
 	return 0;
+}
+
+int dir_exists(const char *path) {
+	/* where is this function used? access() is more light than stat() but it
+	does not equal a 'file exist', but 'file exists and can be accessed' */
+	struct stat sb;
+	if (stat(path, &sb) == -1 && errno == ENOENT) {
+		return 0;
+	}
+	if (!S_ISDIR(sb.st_mode)) {
+		return 0;
+	}
+	return 1;
 }

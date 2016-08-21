@@ -124,7 +124,7 @@ static char *test_jail_and_exec(char *jail, char *exec) {
 	}
 	
 	// try to extract the user from jailpath
-	user = jk_extract_user(jail);	
+	user = jk_extract_user(jail);
 	pw = getpwnam(user);
 	
 	
