@@ -338,18 +338,16 @@ void jk_mount (const char *jaildir, const char *home) {
 		iniparser_close(parser);
 	}
 	
-	// mount proc, sys, devpts
-	// mount("none", "/chroot/k1111/proc", "proc", MS_MGC_VAL, NULL)
-	// mount("sys", "/chroot/k1111/sys", "sysfs", MS_MGC_VAL, NULL)
-	// mount("devpts", "/chroot/k1111/dev/pts", "devpts", MS_MGC_VAL, NULL)
-	// mount(const char *source, const char *target, const char *filesystemtype, unsigned long mountflags, const void *data);
-	
 	if (mountproc == 1) {
-		path = (char *)realloc(path, strlen(jaildir) + 6);
+		path = (char *)realloc(path, strlen(jaildir) + /* strlen("/proc") = */5 + 1);
 		sprintf(path, "%s%s", (jaildir[strlen(jaildir)-1] == '/' ? strndup(jaildir, strlen(jaildir)-1) : jaildir), "/proc");
 		
 		if (!dir_exists(path)) {
-			mkdir(path, 0700);
+			if (mkdir(path, 0700) == -1) {
+				syslog(LOG_ERR, "ERROR: unable to create %s", path);
+				free(path);
+				exit(17);
+			}
 		}
 		
 		if (jk_is_mounted(path) == 0) {
@@ -362,11 +360,15 @@ void jk_mount (const char *jaildir, const char *home) {
 	}
 	
 	if (mountsys == 1) {
-		path = (char *)realloc(path, strlen(jaildir) + 5);
+		path = (char *)realloc(path, strlen(jaildir) + /* strlen("/sys") = */4 + 1);
 		sprintf(path, "%s%s", (jaildir[strlen(jaildir)-1] == '/' ? strndup(jaildir, strlen(jaildir)-1) : jaildir), "/sys");
 		
 		if (!dir_exists(path)) {
-			mkdir(path, 0700);
+			if (mkdir(path, 0700) == -1) {
+				syslog(LOG_ERR, "ERROR: unable to create %s", path);
+				free(path);
+				exit(17);
+			}
 		}
 		
 		if (jk_is_mounted(path) == 0) {
@@ -379,11 +381,15 @@ void jk_mount (const char *jaildir, const char *home) {
 	}
 	
 	if (mountdevpts == 1) {
-		path = (char *)realloc(path, strlen(jaildir) + 9);
+		path = (char *)realloc(path, strlen(jaildir) + /* strlen("/dev/pts") = */8 + 1);
 		sprintf(path, "%s%s", (jaildir[strlen(jaildir)-1] == '/' ? strndup(jaildir, strlen(jaildir)-1) : jaildir), "/dev/pts");
 		
 		if (!dir_exists(path)) {
-			mkdir(path, 0700);
+			if (mkdir(path, 0700) == -1) {
+				syslog(LOG_ERR, "ERROR: unable to create %s", path);
+				free(path);
+				exit(17);
+			}
 		}
 		
 		if (jk_is_mounted(path) == 0) {
