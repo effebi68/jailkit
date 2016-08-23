@@ -214,15 +214,30 @@ def jailuser(jail, user, movehome, config):
 		if (config['verbose'] == 1):
 			print 'user '+user+' has a correct home directory and shell already'
 	#move directory contents
-	tmp = os.path.dirname(oldhome)
-	jk_lib.create_parent_path(jail,tmp, config['verbose'], copy_permissions=1, allow_suid=0, copy_ownership=0)
-	os.mkdir(newhome);
-	sbuf = os.stat(oldhome)
-	os.chown(newhome, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
-	mode = stat.S_IMODE(sbuf[stat.ST_MODE])
-	if (mode & (stat.S_ISUID | stat.S_ISGID)):
-		mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
-	os.chmod(newhome, mode)
+	if (movehome == 1):
+		if (oldhome == newhome):
+			print 'home directory '+oldhome+' is already inside the jail'
+		else:
+			if (not os.path.exists(oldhome)):
+				sys.stderr.write('home directory '+oldhome+' does not exist, nothing moved\n')
+			else:
+				# test if the base directory for newhome exists
+				tmp = os.path.dirname(oldhome)
+				#tmp = jk_lib.nextpathup(oldhome)
+				jk_lib.create_parent_path(jail,tmp, config['verbose'], copy_permissions=1, allow_suid=0, copy_ownership=0)
+				if (config['verbose'] == 1):
+					print 'Moving files from '+oldhome+' to '+newhome
+				jk_lib.move_dir_with_permissions_and_owner(oldhome,newhome,(config['verbose']==1))
+	else:
+		tmp = os.path.dirname(oldhome)
+		jk_lib.create_parent_path(jail,tmp, config['verbose'], copy_permissions=1, allow_suid=0, copy_ownership=0)
+		os.mkdir(newhome);
+		sbuf = os.stat(oldhome)
+		os.chown(newhome, sbuf[stat.ST_UID], sbuf[stat.ST_GID])
+		mode = stat.S_IMODE(sbuf[stat.ST_MODE])
+		if (mode & (stat.S_ISUID | stat.S_ISGID)):
+			mode = (mode & ~stat.S_ISUID) & ~stat.S_ISGID
+		os.chmod(newhome, mode)
 
 def user_exists(user):
 	try:
@@ -303,7 +318,7 @@ def main():
 	config = {}
 	config['verbose'] = 0
 	config['interactive'] = 1
-	config['movehome'] = -1 # -1 = interactive
+	config['movehome'] = 0 # -1 = interactive
 	config['shell'] = '/bin/bash' # default shell
 	jail = None
 	for o, a in opts:
