@@ -324,6 +324,9 @@ void jk_mount (const char *jaildir, const char *home) {
 			if (iniparser_has_section(parser, user)) {
 				section = strdup(user);
 			}
+			else if (iniparser_has_section(parser, "DEFAULT")) {
+				section = strdup("DEFAULT");
+			}
 			
 			if (section) {
 				unsigned int pos = iniparser_get_position(parser) - strlen(section) - 2;
@@ -334,8 +337,10 @@ void jk_mount (const char *jaildir, const char *home) {
 
 				free(section);
 			}
+			
+			free(user);
 		}
-		free(user);
+		
 		iniparser_close(parser);
 	}
 	
