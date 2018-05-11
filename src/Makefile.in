@@ -66,11 +66,11 @@ OBJS = $(SRCS:.c=.o)
 
 all: ${BINARIES}
 
-jk_chrootlaunch: jk_chrootlaunch.o jk_lib.o utils.o
-	$(CC) $(DEFS) -o $@ jk_chrootlaunch.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
+jk_chrootlaunch: jk_chrootlaunch.o iniparser.o jk_lib.o utils.o
+	$(CC) $(DEFS) -o $@ jk_chrootlaunch.o iniparser.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
 
-jk_socketd: jk_socketd.o jk_lib.o utils.o iniparser.o
-	$(CC) $(DEFS) -o $@ jk_socketd.o jk_lib.o utils.o iniparser.o $(LDFLAGS) $(LIBS)
+jk_socketd: jk_socketd.o iniparser.o jk_lib.o utils.o
+	$(CC) $(DEFS) -o $@ jk_socketd.o iniparser.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
 
 jk_lsh: jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o
 	$(CC) $(DEFS) -o $@ jk_lsh.o iniparser.o jk_lib.o utils.o wordexp.o $(LDFLAGS) $(LIBS)
@@ -81,8 +81,8 @@ jk_chrootsh: jk_chrootsh.o iniparser.o jk_lib.o utils.o passwdparser.o
 jk_uchroot: jk_uchroot.o iniparser.o jk_lib.o utils.o
 	$(CC) $(DEFS) -o $@ jk_uchroot.o iniparser.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
 
-jk_procmailwrapper: jk_procmailwrapper.o jk_lib.o utils.o
-	$(CC) $(DEFS) -o $@ jk_procmailwrapper.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
+jk_procmailwrapper: jk_procmailwrapper.o iniparser.o jk_lib.o utils.o
+	$(CC) $(DEFS) -o $@ jk_procmailwrapper.o iniparser.o jk_lib.o utils.o $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -f ${BINARIES}
